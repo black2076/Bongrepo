@@ -1,0 +1,27 @@
+# 문자와 숫자가 섞인 문자열을 입력받을때 구별하여 출력해라
+import string
+
+inputString = input("문자열을 입력해주세요 : ")
+
+i = 0
+number = "1234567890"
+data_str = ""
+data_int = ""
+
+while i < len(inputString):
+    if inputString[i] in string.ascii_lowercase:
+        data_str += inputString[i]
+        i = i + 1
+    elif inputString[i] in number:
+        data_int += inputString[i]
+        i = i + 1
+    elif inputString[i] in " ":
+        data_str += inputString[i]
+        i = i + 1
+    else:
+        i = i + 1
+
+print("문자 : " + data_str)
+print("숫자 : " + data_int)
+
+

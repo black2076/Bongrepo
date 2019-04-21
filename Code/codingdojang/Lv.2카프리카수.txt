@@ -1,0 +1,21 @@
+#카프리카 수
+def kaprekar_number(x):
+    if x == 1:
+        return True
+    expo = x ** 2
+    str_expo = str(expo)
+    str_len = len(str_expo)
+
+    for i in range(1, str_len-1):
+        num1 = int(str_expo[:i])
+        num2 = int(str_expo[i:])
+        result = num1 + num2
+        if result == x:
+            return True
+    return False
+
+
+print(kaprekar_number(1))
+print(kaprekar_number(45))
+print(kaprekar_number(297))
+print(kaprekar_number(3213))

@@ -1,0 +1,39 @@
+import datetime as dt
+
+off_work_time = dt.time(17, 30, 00)
+current_time = input("현재시간 : ")
+
+current_times = current_time.split(':')
+current_time_hour = int(current_times[0])
+current_time_minute = int(current_times[1])
+current_time_second = int(current_times[2])
+
+leave_time_hour = off_work_time.hour - current_time_hour
+leave_time_minute = off_work_time.minute - current_time_minute
+leave_time_second = off_work_time.second - current_time_second
+
+if current_time_minute < 30:
+    leave_time_hour = off_work_time.hour - current_time_hour
+    if current_time_second > 0:
+        leave_time_second = 60 - current_time_second
+        leave_time_minute -= 1
+    else:
+        leave_time_second = 0
+        leave_time_minute = off_work_time.minute - current_time_minute
+
+else:
+    leave_time_hour = off_work_time.hour - current_time_hour - 1
+    if current_time_second > 0:
+        leave_time_second = 60 - current_time_second
+        leave_time_minute = 59 - (current_time_minute - off_work_time.minute)
+    else:
+        leave_time_second = 0
+        leave_time_minute = 60 - (current_time_minute - off_work_time.minute)
+    if leave_time_minute == 60:
+        leave_time_minute -= 60
+        leave_time_hour += 1
+
+print("남은 시간 : %d시간 %d분 %d초" % (leave_time_hour,
+                                leave_time_minute,
+                                leave_time_second))
+
