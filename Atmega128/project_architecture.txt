@@ -1,0 +1,12 @@
+Project name : 음악틀어조
+Project subject : MP3 player
+Project function
+	SWITCH
+    	    - 스위치버튼 제어를 통해 MP3 player 기능
+	    - 노래재생, 음악 속도 증가, 감소, 이전곡&다음곡 선택, 옥타브조절
+	LCD
+	    - 재생하고있는 음악에 대한 계이름 출력
+	7-segment
+	    - 음악 재생 시간 출력
+	LED
+	    - 음악이 재생되고 있다는 걸 알려주는 LED 반복 출력
