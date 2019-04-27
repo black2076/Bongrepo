@@ -1,0 +1,278 @@
+#include "stdio.h"
+
+#define TRUE 1
+#define FALSE 0
+#define MAXvert 100	//대략적인 최대값 설정
+#define GRAY 1
+#define BLACK 2
+#define WHITE 0
+
+
+int graph[MAXvert][MAXvert] = { 0 };	//배열을 이용한 graph		
+int color[MAXvert] = { 0 };	//dft 탐색 상태 보기
+int p[MAXvert] = { -1 };		//선행노드
+int num[MAXvert] = { 0 };	//각 노드들의 DFS 순서값
+int num2[MAXvert] = { 0 };	//각 노드들의 DFS 순서값
+int count = 0;					//DFS 순서값
+int num_depth[MAXvert] = { 0 }; //depth num			
+int TF_articulation_point[MAXvert] = { 0 };	//단절점표현할 배열
+
+int back_edge[MAXvert][MAXvert] = { 0 };	//그래프 모양을 그려줄 back_edge
+
+int temp;
+int back_edge_true = FALSE;
+int connected_graph_TF;
+
+
+int Find_Maxedge(int x);						//최대 엣지수 
+void DFS(int now);		//DFS 호출함수
+void DFS_visit(int now, int vert);	//DFS-VISIT 호출함수
+int depth(int now, int vert);			//depth 검사
+void cut_vert(int now, int vert);	//관절점 찾는 함수
+void test_bridge(int vert);			//브릿지인지 확인하는 함수
+void test_array(int); //브리지 전체 나열
+
+
+
+
+void main()
+{
+	int vert, edge;
+	int i,j;
+	int u, v;
+	int cho_num;
+
+	printf("정점과 간선으로 주어진 그래프의 Bridge를 distinct하는 프로그램입니다.\n");
+
+	printf("정점의 개수를 입력하시오: ");
+	scanf_s("%d", &vert);
+
+	printf("간선의 개수를 입력하시오: ", Find_Maxedge(vert));
+	scanf_s("%d", &edge);
+
+
+
+	for (i = 0; i< edge; i++)	// 간선 입력
+	{
+		printf("간선 %d의 양 끝점을 입력하시오: ", i + 1);
+		scanf_s("%d %d", &u, &v);
+		graph[u][v] = 1;			// 무방향성이기 때문에
+		graph[v][u] = 1;
+		//간선을 넣는다.
+
+	}//여기까지 입력 받는 곳
+
+	/*for (i = 0; i < 100; i++)
+		for (j = 0; j < 100; j++)
+			if(graph[u][v] == 1)
+				printf("%d %d 는 브리지\n",u,v);
+	*/
+
+
+	DFS(vert); // 깊이 우선 검색으로 검색
+
+	for (i = 0; i<vert; i++)
+		depth(i, vert);
+
+
+	for (i = 0; i<vert; i++) {
+		cut_vert(i, vert);	// 단절점, 자르기
+	}
+
+	printf("무엇을 하시겠습니까? 브리지 전체 나열(1)\n");
+	printf("간선 브릿지 테스트(2)\n");
+	scanf_s("%d", &cho_num);
+
+	if (cho_num == 1) {
+		test_array(edge);
+	}
+	else if (cho_num == 2) {
+		test_bridge(vert);
+	}
+	else
+		printf("다시 입력해주세요 \n");
+}
+
+
+int Find_Maxedge(int x)	// 정점수를 매개변수로
+{
+	return x * (x - 1) / 2;		//정점에 한해서 최대 엣지의 수 찾는 함	, 정점이 10개면 간선이 최대 간선은 
+}
+
+
+
+void DFS(int now)	// 노드의 번호 , 노드 별 색칠
+{
+	int i;
+	count = 0;
+
+	for (i = 0; i<now; i++)
+	{						//처음에 다 0이여서 실행
+		if (color[i] == WHITE)	// 검색 안했으면.
+			DFS_visit(i, now);//
+	}
+}
+
+//http://blog.naver.com/okioki007/30052665469
+//DFS 는 탐색 트리의 최초의 자식노드 (child node) 를 확장하여 목표상태 (goal state) 가 발견될 때까지 
+//더 깊이 (deeper and deeper) 확장하는 무정보 탐색 (Uninformed or Blind Search) 이다. 
+//만일 자식노드를 갖지 않은 노드에 이르면 backtrack 하여 다음 노드에서 출발한다.
+
+void DFS_visit(int now, int vert)	// 그래프의 골격을 형성함 
+{//깊이 우선 탐색 시작 맨 밑으로 갔다가 위로 위로 가면서 검색 http://november11.tistory.com/221						//단절점 찾기
+	int i;
+	color[now] = GRAY;	//Back Edge
+	count++;		// 이 노드가 dfs를 몇번했나??
+	num[now] = count;	//노드별 총 횟수를 구하기 위해.
+
+	for (i = 0; i<vert; i++) {
+		if (i == now)
+			continue;
+		//자기자신일 때는 넘어감
+		else if (graph[now][i] == 1)
+			if (color[i] == WHITE)	// 방문하지 않았다면
+			{
+				p[i] = now;	// 선행노드
+				DFS_visit(i, vert);	// deeper and deeper
+			}
+			else if (color[i] == BLACK)			//back_edge로 지난 거 지움.
+			{
+				back_edge[now][i] = 1;	//backtrack	돌아가는 엣지
+				back_edge[i][now] = 1;	// back_edge가 있으면 부모를 그릴 수 있다.
+			}	// back edge는 그래프에서 결국 자기 자신으로 돌아올시 back edge
+				//그러므로 back edge 수는 곧 사이클의 존재 여부와 동치
+	}
+	//간선이 없으면 검사 끝
+	color[now] = BLACK;	//검사 끝 알림 // Forward, Cross 무방향이기 때문에 그런거 없음
+	count++;
+	num2[now] = count;	//뭐냐? 각 노드의 dfs 순서 값
+}
+
+//노드의 깊이 구하기
+int depth(int now, int vert)		//높이 만들기 신장 트리 만들기
+{	// 절단점이 아니라면 모든 내 후손들은 내 선조들로 가는 간선을 갖고 있어야 한다.
+	// 위에 것을 구현하는 방법이
+	// 어떤 vert v로 부터 그 child중 cycle이 있을때 back edge중 방문 순서가 가장 작은 것 또는 없다면 
+	//(바로윗부모를 처리안해서 바로윗부모 방문순서가리턴될꺼임)
+	int i, j;
+	int const_temp = now;		//넘어온 노드번호의 값을 저장
+	num_depth[now] = num[now]; // dfs 
+	for (i = 0; i<vert; i++) {
+		if (i == now)
+			continue;
+		//자기는 넘어간다
+		else if (graph[now][i] == 1) {
+			if (num[now]< num[i])
+			{//나보다 크면 자식노드
+				for (j = 0; j<vert; j++) {
+					if (back_edge[i][j] == 1) {																			//있으면 1
+						if (num[i]<num[now]) {
+							num_depth[now] = num_depth[i];
+							temp = num[i];
+						}
+						else if (num[j]<num[now]) {
+							num_depth[now] = num_depth[j];
+							temp = num[j];
+						}
+						back_edge_true = TRUE;
+						break;
+					}
+				}
+				if (back_edge_true == FALSE) {
+					depth(i, vert);				//역간선이 없는 자식을 다시 호출
+					num_depth[now] = temp;
+				}
+			}
+			else if (num[now]>num[i])		//부모노드 판별
+				if (back_edge[now][i] == 1)
+					num_depth[now] = num[i];
+		}
+	}
+	back_edge_true = FALSE;
+	return 0;
+}
+
+void cut_vert(int now, int vert)	// 단절점 찾기
+{
+	int i, j;
+
+	for (i = 0; i<vert; i++) {
+		if (i == now)
+			continue;
+
+		else if (graph[now][i] == TRUE)
+
+			if (num[now]< num[i])       //나보다 크면 자식노드
+				if (num[now] <= num_depth[i])
+					TF_articulation_point[now] = TRUE;	// Cut 되었을 때 그래프가 분할 된다면.
+
+
+	}
+
+	for (i = 0; i<vert; i++)
+	{
+		for (j = 0; j<vert; j++)
+		{
+			if (p[j] == i)
+				break;
+		}
+		if (j == vert)
+			TF_articulation_point[i] = TRUE;	//원래 단절된 녀석들을 위해
+
+	}
+}
+
+
+void test_bridge(int vert)	// 브릿지 
+{
+	int i, j;
+
+	printf("테스트를 할 간선의 양 끝점을 입력하시오: ");
+	scanf_s("%d %d", &i, &j);
+
+	if (graph[i][j] == TRUE)
+		printf("간선(%d, %d)은 브릿지입니다. \n", i, j);
+
+}
+
+// 브리지 전체 나열
+void test_array(int edge)
+{
+	int i,j,k;
+	int size = 0;
+	int *gr_arr_i;
+	int *gr_arr_j;
+
+	
+	gr_arr_i = (int*)malloc(sizeof(int) * 100);
+	gr_arr_j = (int*)malloc(sizeof(int) * 100);
+	
+
+	
+
+	for (i = 0; i < edge; i++) {
+			graph[i][i] = 2;
+	}
+
+	for (i = 0; i < edge; i++) {
+		for (j = 0; j < edge; j++) {
+			if (graph[i][j] == 2) {
+				break;
+			}
+			if (graph[i][j] == 1) {
+				gr_arr_i[size] = j;
+				gr_arr_j[size] = i;
+				size++;
+			}
+
+		}
+	}
+
+	for(k=0; k<edge; k++) {
+		printf("브릿지 %d는 (%d, %d) \n", k+1, gr_arr_i[k], gr_arr_j[k]);
+	}
+
+	free(gr_arr_i);
+	free(gr_arr_j);
+
+}
